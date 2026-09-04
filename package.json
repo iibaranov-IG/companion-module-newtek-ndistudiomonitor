@@ -1,37 +1,37 @@
 {
-	"name": "newtek-ndistudiomonitor",
-	"version": "2.0.0",
-	"keywords": [
-		"Video",
-		"Software"
-	],
-	"manufacturer": "NewTek",
-	"product": "NDI Studio Monitor",
-	"shortname": "NDIMonitor",
-	"main": "index.js",
-	"scripts": {
-		"test": "node --test",
-		"build": "companion-module-build"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/bitfocus/companion-module-newtek-ndistudiomonitor.git"
-	},
-	"author": "Alberto Righetto",
-	"license": "MIT",
-	"bugs": {
-		"url": "https://github.com/bitfocus/companion-module-newtek-ndistudiomonitor/issues"
-	},
-	"homepage": "https://github.com/bitfocus/companion-module-newtek-ndistudiomonitor#readme",
-	"dependencies": {
-		"@companion-module/base": "~2.1.3"
-	},
-	"devDependencies": {
-		"@companion-module/tools": "^3.1.0"
-	},
-	"packageManager": "yarn@4.17.0",
-	"engines": {
-		"node": "^22.20",
-		"yarn": "^4"
-	}
+  "name": "newtek-ndistudiomonitor",
+  "version": "2.0.0",
+  "keywords": [
+    "Video",
+    "Software"
+  ],
+  "manufacturer": "NewTek",
+  "product": "NDI Studio Monitor",
+  "shortname": "NDIMonitor",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test",
+    "build": "companion-module-build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bitfocus/companion-module-newtek-ndistudiomonitor.git"
+  },
+  "author": "Alberto Righetto",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bitfocus/companion-module-newtek-ndistudiomonitor/issues"
+  },
+  "homepage": "https://github.com/bitfocus/companion-module-newtek-ndistudiomonitor#readme",
+  "dependencies": {
+    "@companion-module/base": "~2.1.3"
+  },
+  "devDependencies": {
+    "@companion-module/tools": "^3.1.0"
+  },
+  "packageManager": "yarn@4.17.0",
+  "engines": {
+    "node": "^22.20",
+    "yarn": "^4"
+  }
 }

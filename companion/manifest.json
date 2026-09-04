@@ -1,17 +1,22 @@
 {
-	"type": "connection",
-	"id": "newtek-ndistudiomonitor",
-	"name": "NewTek: NDI Studio Monitor",
-	"shortname": "NDIMonitor",
-	"description": "Control NDI Studio Monitor over its web-control API",
-	"version": "2.0.0",
-	"license": "MIT",
-	"repository": "git+https://github.com/bitfocus/companion-module-newtek-ndistudiomonitor.git",
-	"bugs": "https://github.com/bitfocus/companion-module-newtek-ndistudiomonitor/issues",
-	"maintainers": [{ "name": "Alberto Righetto" }],
-	"legacyIds": [],
-	"runtime": { "type": "node22", "api": "nodejs-ipc", "apiVersion": "0.0.0", "entrypoint": "../index.js" },
-	"manufacturer": "NewTek",
-	"products": ["NDI Studio Monitor"],
-	"keywords": ["NDI", "video", "monitoring"]
+  "type": "connection",
+  "id": "newtek-ndistudiomonitor",
+  "name": "NewTek: NDI Studio Monitor",
+  "shortname": "NDIMonitor",
+  "description": "Control NDI Studio Monitor over its web-control API",
+  "version": "2.0.0",
+  "license": "MIT",
+  "repository": "git+https://github.com/bitfocus/companion-module-newtek-ndistudiomonitor.git",
+  "bugs": "https://github.com/bitfocus/companion-module-newtek-ndistudiomonitor/issues",
+  "maintainers": [{ "name": "Alberto Righetto" }],
+  "legacyIds": [],
+  "runtime": {
+    "type": "node22",
+    "api": "nodejs-ipc",
+    "apiVersion": "0.0.0",
+    "entrypoint": "../index.js"
+  },
+  "manufacturer": "NewTek",
+  "products": ["NDI Studio Monitor"],
+  "keywords": ["NDI", "video", "monitoring"]
 }
