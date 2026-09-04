@@ -3,11 +3,9 @@ const {
   InstanceStatus,
   Regex,
   combineRgb,
-  runEntrypoint,
 } = require("@companion-module/base");
 const legacyActions = require("./actions");
 const legacyFeedbacks = require("./feedbacks");
-const legacyPresets = require("./presets");
 const { createDigestAuthorization } = require("./protocol");
 
 class NDIStudioMonitorInstance extends InstanceBase {
@@ -112,17 +110,19 @@ class NDIStudioMonitorInstance extends InstanceBase {
 
   initVariables() {
     this.setVariableDefinitions(
-      [
-        "activeSourceComplete",
-        "activeSourceHost",
-        "activeSourceName",
-        "activeOverlayComplete",
-        "activeOverlayHost",
-        "activeOverlayName",
-        "recording",
-        "recordingTimeS",
-        "recordingTimeMS",
-      ].map((variableId) => ({ variableId, name: variableId })),
+      Object.fromEntries(
+        [
+          "activeSourceComplete",
+          "activeSourceHost",
+          "activeSourceName",
+          "activeOverlayComplete",
+          "activeOverlayHost",
+          "activeOverlayName",
+          "recording",
+          "recordingTimeS",
+          "recordingTimeMS",
+        ].map((variableId) => [variableId, { name: variableId }]),
+      ),
     );
   }
   initActions() {
@@ -141,11 +141,38 @@ class NDIStudioMonitorInstance extends InstanceBase {
   }
   initFeedbacks() {
     const feedbacks = {};
+    const styles = {
+      active_source: this.feedbackColors.active_source,
+      active_overlay: this.feedbackColors.active_overlay,
+      active_overlay_pip: this.feedbackColors.active_overlay,
+      active_overlay_alpha: this.feedbackColors.active_overlay,
+      recording: this.feedbackColors.recording,
+      audio_mute: this.feedbackColors.audio_mute,
+    };
     for (const [id, definition] of Object.entries(
       legacyFeedbacks.getFeedbacks.call(this),
     )) {
-      feedbacks[id] = { ...definition, name: definition.label };
-      delete feedbacks[id].label;
+      const style = styles[id];
+      feedbacks[id] = {
+        type: "boolean",
+        name: definition.label,
+        description: definition.description,
+        options: definition.options.filter(
+          (option) => option.id !== "fg" && option.id !== "bg",
+        ),
+        defaultStyle: { color: style.fg, bgcolor: style.bg },
+        callback: (feedback) =>
+          Boolean(
+            definition.callback({
+              ...feedback,
+              options: {
+                ...feedback.options,
+                fg: style.fg,
+                bg: style.bg,
+              },
+            }),
+          ),
+      };
     }
     this.setFeedbackDefinitions(feedbacks);
   }
@@ -153,74 +180,105 @@ class NDIStudioMonitorInstance extends InstanceBase {
   updatePresets() {
     const definitions = {};
     const sections = new Map();
-    const presets = legacyPresets.getPresets.call(this);
-    for (const source of this.pollResults.ndiSources)
-      for (const [category, prefix, action, feedback] of [
-        ["Sources", "", "source", "active_source"],
-        ["Overlay PiP", "Over. PiP: ", "overlay_pip", "active_overlay_pip"],
-        [
-          "Overlay alpha",
-          "Over. alpha: ",
-          "overlay_alpha",
-          "active_overlay_alpha",
-        ],
-      ]) {
-        const colors =
-          feedback === "active_source"
-            ? this.feedbackColors.active_source
-            : this.feedbackColors.active_overlay;
-        presets.push({
-          category,
-          label: `${prefix}${source.label}`,
-          bank: {
-            text: `${prefix}${source.label}`,
-            size: "auto",
-            color: this.defaultColors.fg,
-            bgcolor: this.defaultColors.bg,
-          },
-          feedbacks: [
-            {
-              type: feedback,
-              options: { source: source.id, fg: colors.fg, bg: colors.bg },
-            },
-          ],
-          actions: [{ action, options: { source: source.id } }],
-        });
-      }
-    for (const [index, preset] of presets.entries()) {
-      const presetId = `preset_${index}`;
-      definitions[presetId] = {
+    const addPreset = ({
+      id,
+      category,
+      name,
+      text,
+      action,
+      options,
+      feedback,
+    }) => {
+      definitions[id] = {
         type: "simple",
-        name: preset.label,
+        name,
         style: {
-          text: preset.bank?.text ?? preset.label,
-          size: preset.bank?.size ?? "auto",
-          color: Number(preset.bank?.color ?? this.defaultColors.fg),
-          bgcolor: Number(preset.bank?.bgcolor ?? this.defaultColors.bg),
+          text,
+          size: "auto",
+          color: this.defaultColors.fg,
+          bgcolor: this.defaultColors.bg,
         },
         steps: [
           {
-            down: (preset.actions ?? []).map((action) => ({
-              actionId: action.action,
-              options: action.options ?? {},
-            })),
+            down: [{ actionId: action, options: options ?? {} }],
             up: [],
           },
         ],
-        feedbacks: (preset.feedbacks ?? []).map((feedback) => ({
-          feedbackId: feedback.type,
-          options: feedback.options ?? {},
-        })),
+        feedbacks: feedback
+          ? [
+              {
+                feedbackId: feedback.id,
+                options: feedback.options ?? {},
+                style: feedback.style,
+              },
+            ]
+          : [],
       };
-      if (!sections.has(preset.category))
-        sections.set(preset.category, {
-          id: `section_${sections.size}`,
-          name: preset.category,
-          definitions: [],
+      if (!sections.has(category)) sections.set(category, []);
+      sections.get(category).push(id);
+    };
+
+    for (const [index, source] of this.pollResults.ndiSources.entries()) {
+      for (const [category, prefix, action, feedbackId] of [
+        ["Sources", "", "source", "active_source"],
+        ["Overlay PiP", "PiP: ", "overlay_pip", "active_overlay_pip"],
+        ["Overlay alpha", "Alpha: ", "overlay_alpha", "active_overlay_alpha"],
+      ]) {
+        const colors =
+          feedbackId === "active_source"
+            ? this.feedbackColors.active_source
+            : this.feedbackColors.active_overlay;
+        addPreset({
+          id: `${action}_${index}`,
+          category,
+          name: `${prefix}${source.label}`,
+          text: `${prefix}${source.label}`,
+          action,
+          options: { source: source.id },
+          feedback: {
+            id: feedbackId,
+            options: { source: source.id },
+            style: { color: colors.fg, bgcolor: colors.bg },
+          },
         });
-      sections.get(preset.category).definitions.push(presetId);
+      }
     }
-    this.setPresetDefinitions([...sections.values()], definitions);
+    addPreset({
+      id: "overlay_hide",
+      category: "Controls",
+      name: "Hide overlay",
+      text: "Hide overlay",
+      action: "overlay_hide",
+    });
+    addPreset({
+      id: "audio_mute",
+      category: "Controls",
+      name: "Mute audio",
+      text: "Mute audio",
+      action: "audio_mute",
+      feedback: {
+        id: "audio_mute",
+        style: {
+          color: this.feedbackColors.audio_mute.fg,
+          bgcolor: this.feedbackColors.audio_mute.bg,
+        },
+      },
+    });
+    addPreset({
+      id: "audio_unmute",
+      category: "Controls",
+      name: "Unmute audio",
+      text: "Unmute audio",
+      action: "audio_unmute",
+    });
+    this.setPresetDefinitions(
+      [...sections.entries()].map(([name, presetIds], index) => ({
+        id: `section_${index}`,
+        name,
+        definitions: presetIds,
+      })),
+      definitions,
+    );
   }
 
   async connect() {
@@ -410,4 +468,6 @@ class NDIStudioMonitorInstance extends InstanceBase {
   }
 }
 
-runEntrypoint(NDIStudioMonitorInstance, []);
+// Companion module-base 2 loads the instance constructor as the default export.
+// The old `runEntrypoint()` bootstrap was removed in module-base 2.
+module.exports = NDIStudioMonitorInstance;
